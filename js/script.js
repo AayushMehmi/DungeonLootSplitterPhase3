@@ -1,13 +1,88 @@
-// Aayush Mehmi, 6/14/2026
+// Aayush Mehmi, 6/24/2026
 
-// The loot array is the source of truth for all loot data.
-const loot = [];
+const STORAGE_KEY = "lootSplitterState";
+
+let loot = [];
+let partySize = 1;
 
 document.getElementById("addLootButton").addEventListener("click", addLoot);
 document.getElementById("splitLootButton").addEventListener("click", splitLoot);
-document.getElementById("partySize").addEventListener("input", updateUI);
+document.getElementById("resetButton").addEventListener("click", resetAll);
 
+document.getElementById("partySize").addEventListener("input", function () {
+    const enteredSize = parseInt(document.getElementById("partySize").value);
+
+    if (!isNaN(enteredSize) && enteredSize >= 1) {
+        partySize = enteredSize;
+        saveState();
+    }
+
+    updateUI();
+});
+
+restoreState();
 updateUI();
+
+function saveState() {
+
+    const appState = {
+        loot: loot,
+        partySize: partySize
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+}
+
+function restoreState() {
+
+    loot = [];
+    partySize = 1;
+
+    const savedState = localStorage.getItem(STORAGE_KEY);
+
+    if (savedState === null) {
+        document.getElementById("partySize").value = partySize;
+        return;
+    }
+
+    try {
+        const parsed = JSON.parse(savedState);
+
+        if (typeof parsed === "object" && parsed !== null) {
+
+            if (!isNaN(parsed.partySize) && parsed.partySize >= 1) {
+                partySize = parseInt(parsed.partySize);
+            }
+
+            if (Array.isArray(parsed.loot)) {
+
+                for (let i = 0; i < parsed.loot.length; i++) {
+
+                    const item = parsed.loot[i];
+
+                    if (
+                        item.name !== "" &&
+                        !isNaN(item.value) &&
+                        item.value >= 0 &&
+                        !isNaN(item.quantity) &&
+                        item.quantity >= 1
+                    ) {
+                        loot.push({
+                            name: item.name,
+                            value: parseFloat(item.value),
+                            quantity: parseInt(item.quantity)
+                        });
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        loot = [];
+        partySize = 1;
+    }
+
+    document.getElementById("partySize").value = partySize;
+}
 
 function addLoot() {
 
@@ -15,7 +90,6 @@ function addLoot() {
     const value = parseFloat(document.getElementById("lootValue").value);
     const quantity = parseInt(document.getElementById("lootQuantity").value);
 
-    // Validation protects the array from invalid state.
     if (name === "") {
         document.getElementById("message").textContent =
             "Please enter a loot name.";
@@ -34,7 +108,6 @@ function addLoot() {
         return;
     }
 
-    // Each item is stored as a plain object literal with name, value, and quantity.
     loot.push({
         name: name,
         value: value,
@@ -48,28 +121,38 @@ function addLoot() {
     document.getElementById("lootValue").value = "";
     document.getElementById("lootQuantity").value = "";
 
+    saveState();
     updateUI();
 }
 
 function removeLoot(index) {
 
-    // splice removes the correct item from the array by its position.
     loot.splice(index, 1);
 
+    saveState();
     updateUI();
 }
 
 function splitLoot() {
 
-    // The button does not calculate directly.
-    // It only asks the app to refresh from the current state.
+    updateUI();
+}
+
+function resetAll() {
+
+    loot = [];
+    partySize = 1;
+
+    document.getElementById("partySize").value = partySize;
+    document.getElementById("message").textContent = "";
+    document.getElementById("splitMessage").textContent = "";
+
+    localStorage.removeItem(STORAGE_KEY);
+
     updateUI();
 }
 
 function updateUI() {
-
-    const partySize =
-        parseInt(document.getElementById("partySize").value);
 
     const lootRows = document.getElementById("lootRows");
 
@@ -77,7 +160,6 @@ function updateUI() {
 
     lootRows.innerHTML = "";
 
-    // This loop renders loot and calculates total from the array.
     for (let i = 0; i < loot.length; i++) {
 
         total += loot[i].value * loot[i].quantity;
@@ -134,7 +216,6 @@ function updateUI() {
             "0.00";
     }
 
-    // Empty state and results visibility are controlled with CSS classes.
     if (lootExists) {
         document.getElementById("noLootMessage").classList.add("hidden");
         document.getElementById("totalRow").classList.remove("hidden");

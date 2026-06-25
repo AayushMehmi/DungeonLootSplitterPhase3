@@ -66,6 +66,7 @@
             <h2>Split Loot</h2>
 
             <button id="splitLootButton" disabled>Split Loot</button>
+            <button id="resetButton" class="reset-button">Reset All</button>
 
             <div id="resultsPanel" class="hidden">
                 <p>Total Loot: $<span id="finalTotal">0.00</span></p>
@@ -82,7 +83,8 @@
                 My loot array is the source of truth because all loot items are stored there as objects.
                 Each object includes a name, value, and quantity, so the app can calculate value times quantity.
                 The updateUI() function recalculates totals, renders the loot list, and updates what is visible or disabled.
-                Conditional logic prevents invalid loot, invalid party size, and empty state errors from becoming part of the app state.
+                Phase 3 adds localStorage so the loot array and party size can be saved and restored after the page reloads.
+                The reset button clears the array, resets party size, removes stored data, and updates the screen immediately.
             </p>
         </section>
     </main>
